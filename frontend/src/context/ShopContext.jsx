@@ -8,18 +8,17 @@ export const useShop = () => useContext(ShopContext);
 export const ShopProvider = ({ children }) => {
   // Database States
   const [products, setProducts] = useState(() => {
-    const saved = localStorage.getItem('fk_products_v2');
+    const saved = localStorage.getItem('fk_products_v3');
     if (saved) {
       try {
         const parsed = JSON.parse(saved);
-        if (parsed.length >= 60000) {
-          return parsed;
-        }
+        return parsed;
       } catch (e) {
-        console.error("Failed to parse cached fk_products_v2, resetting to full catalog", e);
+        console.error("Failed to parse cached fk_products_v3, resetting to original catalog", e);
       }
     }
-    // Cache was outdated or stale, clear it to load our new massive 60,000+ items catalog
+    // Remove obsolete heavy cache keys
+    localStorage.removeItem('fk_products');
     localStorage.removeItem('fk_products_v2');
     return allProducts;
   });
@@ -97,12 +96,7 @@ export const ShopProvider = ({ children }) => {
   // Sync to LocalStorage
   useEffect(() => {
     try {
-      // Standard large-scale databases are loaded directly from memory (allProducts).
-      // We only save to local storage if it's small (e.g. customized test state lists),
-      // protecting against browser storage QuotaExceededError crashes with 50,000+ items.
-      if (products.length < 1000) {
-        localStorage.setItem('fk_products_v2', JSON.stringify(products));
-      }
+      localStorage.setItem('fk_products_v3', JSON.stringify(products));
     } catch (e) {
       console.warn("Storage quota limit reached or localStorage disabled. Bypassing cache.", e);
     }

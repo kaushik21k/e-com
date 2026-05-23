@@ -933,4 +933,4 @@ const addDummyProducts = () => {
   return list;
 };
 
-export const allProducts = addDummyProducts();
+export const allProducts = sampleProducts;

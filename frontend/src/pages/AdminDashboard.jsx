@@ -44,6 +44,7 @@ export default function AdminDashboard() {
     name: '',
     brand: '',
     category: 'Mobiles',
+    subcategory: '',
     originalPrice: '',
     price: '',
     discount: '0',
@@ -52,10 +53,11 @@ export default function AdminDashboard() {
     emiOption: 'N/A',
     warranty: '1 Year Brand Warranty',
     seller: 'SuperCom Net',
-    imageUrl: 'https://images.unsplash.com/photo-1598327105666-5b89351aff97?w=600&auto=format&fit=crop&q=80',
+    imageUrls: 'https://images.unsplash.com/photo-1598327105666-5b89351aff97?w=600&auto=format&fit=crop&q=80',
     highlights1: 'Dual SIM connectivity',
     highlights2: 'High capacity long battery life',
-    highlights3: 'Pre-installed custom interface OS'
+    highlights3: 'Pre-installed custom interface OS',
+    specificationsText: 'Model Name: Pro Series\nBrand: Apple\nCategory: Mobiles'
   });
 
   // Security Wall
@@ -77,10 +79,31 @@ export default function AdminDashboard() {
   // Add Product Submit
   const handleAddProductSubmit = (e) => {
     e.preventDefault();
+
+    // Parse image URLs list
+    const parsedImages = newProd.imageUrls
+      .split(',')
+      .map(url => url.trim())
+      .filter(url => url.length > 0);
+
+    // Parse specs grid from multiline text
+    const parsedSpecs = {};
+    newProd.specificationsText.split('\n').forEach(line => {
+      const idx = line.indexOf(':');
+      if (idx !== -1) {
+        const key = line.substring(0, idx).trim();
+        const value = line.substring(idx + 1).trim();
+        if (key && value) {
+          parsedSpecs[key] = value;
+        }
+      }
+    });
+
     const productPayload = {
       name: newProd.name,
       brand: newProd.brand,
       category: newProd.category,
+      subcategory: newProd.subcategory || newProd.category,
       originalPrice: Number(newProd.originalPrice),
       price: Number(newProd.price),
       discount: Number(newProd.discount),
@@ -89,10 +112,10 @@ export default function AdminDashboard() {
       emiOption: newProd.emiOption,
       warranty: newProd.warranty,
       seller: newProd.seller,
-      images: [newProd.imageUrl],
-      highlights: [newProd.highlights1, newProd.highlights2, newProd.highlights3],
-      specs: {
-        "Model": "Pro Series",
+      images: parsedImages.length > 0 ? parsedImages : ['https://images.unsplash.com/photo-1598327105666-5b89351aff97?w=600&auto=format&fit=crop&q=80'],
+      highlights: [newProd.highlights1, newProd.highlights2, newProd.highlights3].filter(Boolean),
+      specs: Object.keys(parsedSpecs).length > 0 ? parsedSpecs : {
+        "Model Name": newProd.name,
         "Brand": newProd.brand,
         "Category": newProd.category
       }
@@ -111,10 +134,17 @@ export default function AdminDashboard() {
 
   const handleEditClick = (prod) => {
     setEditingProduct(prod);
+
+    // Construct specs text lines back from object
+    const specsLines = Object.entries(prod.specs || {})
+      .map(([key, val]) => `${key}: ${val}`)
+      .join('\n');
+
     setNewProd({
       name: prod.name,
       brand: prod.brand,
       category: prod.category,
+      subcategory: prod.subcategory || prod.category,
       originalPrice: prod.originalPrice.toString(),
       price: prod.price.toString(),
       discount: prod.discount.toString(),
@@ -123,10 +153,11 @@ export default function AdminDashboard() {
       emiOption: prod.emiOption,
       warranty: prod.warranty,
       seller: prod.seller,
-      imageUrl: prod.images[0],
+      imageUrls: (prod.images || []).join(', '),
       highlights1: prod.highlights[0] || 'Premium Build',
       highlights2: prod.highlights[1] || 'Includes Warranty',
-      highlights3: prod.highlights[2] || 'Multi-device compatible'
+      highlights3: prod.highlights[2] || 'Multi-device compatible',
+      specificationsText: specsLines || `Model Name: ${prod.name}\nBrand: ${prod.brand}\nCategory: ${prod.category}`
     });
     setShowAddModal(true);
   };
@@ -136,6 +167,7 @@ export default function AdminDashboard() {
       name: '',
       brand: '',
       category: 'Mobiles',
+      subcategory: '',
       originalPrice: '',
       price: '',
       discount: '0',
@@ -144,10 +176,11 @@ export default function AdminDashboard() {
       emiOption: 'N/A',
       warranty: '1 Year Brand Warranty',
       seller: 'SuperCom Net',
-      imageUrl: 'https://images.unsplash.com/photo-1598327105666-5b89351aff97?w=600&auto=format&fit=crop&q=80',
+      imageUrls: 'https://images.unsplash.com/photo-1598327105666-5b89351aff97?w=600&auto=format&fit=crop&q=80',
       highlights1: 'Dual SIM connectivity',
       highlights2: 'High capacity long battery life',
-      highlights3: 'Pre-installed custom interface OS'
+      highlights3: 'Pre-installed custom interface OS',
+      specificationsText: 'Model Name: Pro Series\nBrand: Apple\nCategory: Mobiles'
     });
   };
 
@@ -534,7 +567,7 @@ export default function AdminDashboard() {
                 </div>
 
                 {/* Categories & Price */}
-                <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+                <div className="grid grid-cols-1 md:grid-cols-5 gap-4">
                   <div>
                     <label className="text-[10px] font-bold text-gray-400 block mb-1">CATEGORY</label>
                     <select
@@ -554,6 +587,17 @@ export default function AdminDashboard() {
                       <option value="Toys">Toys</option>
                       <option value="Accessories">Accessories</option>
                     </select>
+                  </div>
+                  <div>
+                    <label className="text-[10px] font-bold text-gray-400 block mb-1">SUBCATEGORY *</label>
+                    <input
+                      type="text"
+                      required
+                      placeholder="e.g. iOS or Android"
+                      value={newProd.subcategory}
+                      onChange={(e) => setNewProd({ ...newProd, subcategory: e.target.value })}
+                      className="w-full px-3 py-2 border rounded dark:bg-slate-900 dark:border-slate-700 input-focus font-bold"
+                    />
                   </div>
                   <div>
                     <label className="text-[10px] font-bold text-gray-400 block mb-1">ORIGINAL PRICE *</label>
@@ -620,15 +664,16 @@ export default function AdminDashboard() {
                   </div>
                 </div>
 
-                {/* Image & highlights */}
+                {/* Image URLs list */}
                 <div>
-                  <label className="text-[10px] font-bold text-gray-400 block mb-1">PRODUCT IMAGE (URL) *</label>
-                  <input
-                    type="url"
+                  <label className="text-[10px] font-bold text-gray-400 block mb-1">PRODUCT IMAGES (Comma separated URLs for gallery) *</label>
+                  <textarea
                     required
-                    value={newProd.imageUrl}
-                    onChange={(e) => setNewProd({ ...newProd, imageUrl: e.target.value })}
-                    className="w-full px-3 py-2 border rounded dark:bg-slate-900 dark:border-slate-700 input-focus font-medium"
+                    rows={2}
+                    value={newProd.imageUrls}
+                    onChange={(e) => setNewProd({ ...newProd, imageUrls: e.target.value })}
+                    className="w-full px-3 py-2 border rounded dark:bg-slate-900 dark:border-slate-700 input-focus font-medium font-mono text-[10px]"
+                    placeholder="e.g. URL-1, URL-2, URL-3"
                   />
                 </div>
 
@@ -658,6 +703,19 @@ export default function AdminDashboard() {
                     value={newProd.highlights3}
                     onChange={(e) => setNewProd({ ...newProd, highlights3: e.target.value })}
                     className="w-full px-3 py-2 border rounded dark:bg-slate-900 dark:border-slate-700 input-focus"
+                  />
+                </div>
+
+                {/* Specifications Multiline Editor */}
+                <div>
+                  <label className="text-[10px] font-bold text-gray-400 block mb-1">TECHNICAL SPECIFICATIONS GRID (One Key:Value per line) *</label>
+                  <textarea
+                    required
+                    rows={4}
+                    value={newProd.specificationsText}
+                    onChange={(e) => setNewProd({ ...newProd, specificationsText: e.target.value })}
+                    className="w-full px-3 py-2 border rounded dark:bg-slate-900 dark:border-slate-700 input-focus font-medium font-mono text-[10px]"
+                    placeholder="Model Name: iPhone 15 Pro&#10;Color: Natural Titanium&#10;Display Size: 6.1 inch&#10;RAM: 8 GB"
                   />
                 </div>
 
